@@ -10,7 +10,7 @@ neighborhood = {}
 
 
 registerSelf = (pagehandler) ->
-  console.log("registering own face'")
+  console.log("registering own face'", pagehandler)
   name = new ndn.Name("localhost/nfd/fib/add-nexthop")
   console.log host
   param =
@@ -82,7 +82,7 @@ makeFace = (site) ->
 
   onData = (interest, data) ->
     console.log("makeFace got Response", data.content.toString())
-    neighborhood[site].faceID = data.content.toString()
+    neighborhood[site].faceID = JSON.parse(data.content.toString()).faceID
     #neighborhood[site].hashName = JSON.parse(data.content).ndndid
     console.log(neighborhood[site], thishost)
     uri = "/wiki/"+ thishost + "/sitemap"
@@ -134,7 +134,7 @@ module.exports = (pagehandler, action, argv) ->
     host = parts.split(":")[0]
     console.log(host)
 
-    registerSelf(pagehandler)
+
 
 
   else
@@ -142,3 +142,5 @@ module.exports = (pagehandler, action, argv) ->
       for page in sitemap
         pagehandler.get page.slug, (e, page, status) ->
           scan page
+
+    registerSelf(pagehandler)
