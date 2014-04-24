@@ -62,6 +62,7 @@ module.exports = exports = (argv) ->
   # that is passed in and then does its
   # best to supply sane defaults for any arguments that are missing.
   argv = defargs(argv)
+  require('./ndn')(null, null, argv)
 
   app.startOpts = do ->
     options = {}
