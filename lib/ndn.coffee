@@ -1,6 +1,9 @@
 ndn = require("ndn-lib")
 utils = require("ndn-utils")
-
+RegisteredPrefix = (prefix, closure) ->
+  this.prefix = prefix
+  this.closure = closure
+  this
 
 
 face = new ndn.Face({host:"localhost", port: 6464})
@@ -10,6 +13,31 @@ host = null
 neighbors = []
 neighborhood = {}
 
+pageBuffer = {}
+
+registerPageInterestHandler = (pagehandler) ->
+
+  pageInterestHandler = (prefix, interest, transport) ->
+    console.log("got interest in pageInterestHandler")
+    slug = interest.name.components[2].toEscapedString()
+    int = utils.getSegmentInteger(interest.name)
+    if (!pageBuffer[slug])
+      console.log("pagehandler.get ", slug)
+      pagehandler.get slug, (e, page, status) ->
+        pageBuffer[slug] = utils.chunkArbitraryData({type: "object", thing: page, freshness: 60 * 60 * 1000, version: page.journal[page.journal.length - 1].date, uri: "wiki/page/"+ slug}).array
+        toSend = pageBuffer[slug][int]
+        console.log(toSend)
+        transport.send(toSend.buffer)
+    else
+      transport.send(pageBuffer[slug][int].buffer)
+
+  uri = "/wiki/page"
+  closure = new ndn.Face.CallbackClosure null, null, pageInterestHandler, new ndn.Name(uri), face.transport
+  console.log closure
+  registeredPrefix = new RegisteredPrefix uri, closure
+  console.log registeredPrefix
+  ndn.Face.registeredPrefixTable.push registeredPrefix
+  console.log("registered",uri," preifx", ndn.Face.registeredPrefixTable)
 
 registerSelf = (pagehandler, hostOrSlug) ->
   console.log("registering own face'", pagehandler)
@@ -38,12 +66,13 @@ registerSelf = (pagehandler, hostOrSlug) ->
         transport.send(enc.buffer)
 
   onData = ( interest, data, something) ->
-    if (data.content.toString() == "success")
+    if ((data.content.toString() == "success") &&(!hostOrSlug))
       registeredPrefix =
         prefix : new ndn.Name(param.uri)
         closure : new ndn.Face.CallbackClosure(null, null, onInterest, param.uri, face.transport)
 
       ndn.Face.registeredPrefixTable.push(registeredPrefix)
+
 
 
   onTimeout = (name, interest, something) ->
@@ -80,7 +109,7 @@ makeFace = (site) ->
   ond = (interest, data) ->
     neighborhood[site].sitemap = JSON.parse(data.content.toString())
 
-    console.log("got remote sitemap,", neighborhood[site].sitemap)
+    #console.log("got remote sitemap,", neighborhood[site].sitemap)
     for page in neighborhood[site].sitemap
       nexthop =
         uri: "wiki/page/" + page.slug,
@@ -101,7 +130,7 @@ makeFace = (site) ->
     console.log("makeFace got Response", data.content.toString())
     neighborhood[site].faceID = JSON.parse(data.content.toString()).faceID
     #neighborhood[site].hashName = JSON.parse(data.content).ndndid
-    console.log(neighborhood[site], thishost)
+    #console.log(neighborhood[site], thishost)
     uri = "/wiki/"+ thishost + "/sitemap"
     hashname = new ndn.Name(uri)
     console.log(hashname)
@@ -136,8 +165,9 @@ module.exports = (pagehandler, action, argv) ->
       if (action.site? && !neighborhood[action.site])
         registerNeighbor(action.site)
 
-  if action?
-    console.log(action)
+  if (action?)
+    if (pageBuffer[action.slug]?)
+      pageBuffer[action.slug] = undefined
     sites = []
     sites.push(action.site) if action.site?
     sites.push(action.item.site) if (action.item? && action.item.site?)
@@ -162,3 +192,6 @@ module.exports = (pagehandler, action, argv) ->
           scan page
 
     registerSelf(pagehandler)
+    registerPageInterestHandler(pagehandler)
+    console.log("PPPPPPPPPPPPPPPPPPPPPPAGEHANDLER TEST")
+

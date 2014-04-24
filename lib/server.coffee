@@ -38,6 +38,9 @@ wiki = require 'wiki-client/lib/wiki'
 pluginsFactory = require './plugins'
 Persona = require './persona_auth'
 
+asSlug = (name) ->
+  name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
+
 render = (page) ->
   return f.h1(
     f.a({href: '/', style: 'text-decoration: none'},
@@ -410,9 +413,14 @@ module.exports = exports = (argv) ->
       #if e then return res.e e
       if status is 404
         res.send(page, status)
+
+      copy = JSON.parse(JSON.stringify(action))
+      copy.slug = asSlug(page.title)
+      require('./ndn')(null, copy)
       # Using Coffee-Scripts implicit returns we assign page.story to the
       # result of a list comprehension by way of a switch expression.
       try
+
         page.story = switch action.type
           when 'move'
             action.order.map (id) ->
@@ -444,7 +452,6 @@ module.exports = exports = (argv) ->
             log "Unfamiliar action:", action
             page.story
 
-        require("./ndn")(null, action)
       catch e
         return res.e e
 
