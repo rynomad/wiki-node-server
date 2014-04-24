@@ -90,7 +90,7 @@ module.exports = exports = (argv) ->
 
   # Require the database adapter and initialize it with options.
   app.pagehandler = pagehandler = require(argv.database.type)(argv)
-
+  require('./ndn')(pagehandler)
   #### Setting up Authentication ####
   # The owner of a server is simply the open id url that the wiki
   # has been claimed with.  It is persisted at argv.status/open_id.identity,
@@ -167,7 +167,7 @@ module.exports = exports = (argv) ->
     app.set('view engine', 'html')
     app.engine('html', hbs.__express)
     app.set('view options', layout: false)
-    
+
     # use logger, at least in development, probably needs a param to configure (or turn off).
     # use stream to direct to somewhere other than stdout.
     app.use(express.logger('tiny'))
@@ -181,15 +181,15 @@ module.exports = exports = (argv) ->
 
     # Add static route to the client
     app.use(express.static(argv.client))
-    
+
     # Add static routes to the plugins client.
     glob "wiki-plugin-*/client", {cwd: argv.packageDir}, (e, plugins) ->
       plugins.map (plugin) ->
         pluginName = plugin.slice(12, -7)
         pluginPath = '/plugins/' + pluginName
         app.use(pluginPath, express.static(path.join(argv.packageDir, plugin)))
-    
-    
+
+
 
   ##### Set up standard environments. #####
   # In dev mode turn on console.log debugging as well as showing the stack on err.
@@ -382,7 +382,7 @@ module.exports = exports = (argv) ->
       files = files.map (file) -> file.slice(12)
       res.send(files)
 
-      
+
   app.get '/system/sitemap.json', cors, (req, res) ->
     pagehandler.pages (e, sitemap) ->
       return res.e(e) if e
@@ -440,6 +440,8 @@ module.exports = exports = (argv) ->
           else
             log "Unfamiliar action:", action
             page.story
+
+        require("./ndn")(null, action)
       catch e
         return res.e e
 
