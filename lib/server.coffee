@@ -20,6 +20,7 @@ child_process = require 'child_process'
 spawn = child_process.spawn
 
 # From npm
+
 mkdirp = require 'mkdirp'
 express = require 'express'
 hbs = require 'hbs'
@@ -62,7 +63,6 @@ module.exports = exports = (argv) ->
   # that is passed in and then does its
   # best to supply sane defaults for any arguments that are missing.
   argv = defargs(argv)
-  require('./ndn')(null, null, argv)
 
   app.startOpts = do ->
     options = {}
@@ -91,7 +91,9 @@ module.exports = exports = (argv) ->
 
   # Require the database adapter and initialize it with options.
   app.pagehandler = pagehandler = require(argv.database.type)(argv)
-  require('./ndn')(pagehandler)
+  require('nfd')(() ->
+      require('./ndn')(pagehandler, null, argv)
+    )
   #### Setting up Authentication ####
   # The owner of a server is simply the open id url that the wiki
   # has been claimed with.  It is persisted at argv.status/open_id.identity,

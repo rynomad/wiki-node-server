@@ -1,4 +1,6 @@
 ndn = require("ndn-lib")
+utils = require("ndn-utils")
+
 
 
 face = new ndn.Face({host:"localhost", port: 6464})
@@ -9,12 +11,15 @@ neighbors = []
 neighborhood = {}
 
 
-registerSelf = (pagehandler) ->
+registerSelf = (pagehandler, hostOrSlug) ->
   console.log("registering own face'", pagehandler)
   name = new ndn.Name("localhost/nfd/fib/add-nexthop")
   console.log host
   param =
-    uri: "wiki/" + host
+    uri: "wiki/"
+
+  param.uri += hostOrSlug || host
+  console.log(param.uri)
 
   d = new ndn.Data(new ndn.Name(''), new ndn.SignedInfo(), JSON.stringify(param))
   d.signedInfo.setFields()
@@ -75,7 +80,19 @@ makeFace = (site) ->
   ond = (interest, data) ->
     neighborhood[site].sitemap = JSON.parse(data.content.toString())
 
-    console.log("got remote key,", neighborhood[site])
+    console.log("got remote sitemap,", neighborhood[site].sitemap)
+    for page in neighborhood[site].sitemap
+      nexthop =
+        uri: "wiki/page/" + page.slug,
+        faceID : neighborhood[site].faceID,
+
+      d = new ndn.Data(new ndn.Name(), new ndn.SignedInfo(), JSON.stringify(nexthop))
+      d.signedInfo.setFields()
+      d.sign()
+      n = new ndn.Name("localhost/nfd/fib/add-nexthop")
+      n.append(d.wireEncode().buffer)
+      i = new ndn.Interest(n)
+      face.expressInterest(i)
 
   ont = (timeout, intrerest) ->
     console.log("getremoteKeyTimeout")
@@ -137,9 +154,10 @@ module.exports = (pagehandler, action, argv) ->
 
 
 
-  else
+  if pagehandler?
     pagehandler.pages (e, sitemap) ->
       for page in sitemap
+        registerSelf(pagehandler, "page/" + page.slug)
         pagehandler.get page.slug, (e, page, status) ->
           scan page
 
