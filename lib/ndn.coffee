@@ -73,9 +73,9 @@ makeFace = (site) ->
 
 
   ond = (interest, data) ->
-    neighborhood[site].hashName = data.content.toString('hex')
+    neighborhood[site].sitemap = JSON.parse(data.content.toString())
 
-    console.log("got remote key,", data.content)
+    console.log("got remote key,", neighborhood[site])
 
   ont = (timeout, intrerest) ->
     console.log("getremoteKeyTimeout")
