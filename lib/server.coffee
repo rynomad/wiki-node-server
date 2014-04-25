@@ -411,12 +411,14 @@ module.exports = exports = (argv) ->
     # Handle all of the possible actions to be taken on a page,
     actionCB = (e, page, status) ->
       #if e then return res.e e
+      console.log(e, page, status)
       if status is 404
         res.send(page, status)
 
       copy = JSON.parse(JSON.stringify(action))
       copy.slug = asSlug(page.title)
       require('./ndn')(null, copy)
+      console.log("actionCB?")
       # Using Coffee-Scripts implicit returns we assign page.story to the
       # result of a list comprehension by way of a switch expression.
       try
@@ -475,8 +477,10 @@ module.exports = exports = (argv) ->
       remoteGet(action.fork, req.params[0], actionCB)
     else if action.type is 'create'
       # Prevent attempt to write circular structure
+      console.log("action create")
       itemCopy = JSON.parse(JSON.stringify(action.item))
       pagehandler.get req.params[0], (e, page, status) ->
+        console.log("pagehandler callback", req.params[0])
         if e then return actionCB(e)
         unless status is 404
           res.send('Page already exists.', 409)

@@ -5,6 +5,8 @@ RegisteredPrefix = (prefix, closure) ->
   this.closure = closure
   this
 
+asSlug = (name) ->
+  name.replace(/\s/g, '-').replace(/[^A-Za-z0-9-]/g, '').toLowerCase()
 
 face = new ndn.Face({host:"localhost", port: 6464})
 localid = null
@@ -12,7 +14,7 @@ host = null
 
 neighbors = []
 neighborhood = {}
-
+registeredPages = {}
 pageBuffer = {}
 
 registerPageInterestHandler = (pagehandler) ->
@@ -26,7 +28,6 @@ registerPageInterestHandler = (pagehandler) ->
       pagehandler.get slug, (e, page, status) ->
         pageBuffer[slug] = utils.chunkArbitraryData({type: "object", thing: page, freshness: 60 * 60 * 1000, version: page.journal[page.journal.length - 1].date, uri: "wiki/page/"+ slug}).array
         toSend = pageBuffer[slug][int]
-        console.log(toSend)
         transport.send(toSend.buffer)
     else
       transport.send(pageBuffer[slug][int].buffer)
@@ -165,15 +166,22 @@ module.exports = (pagehandler, action, argv) ->
       if (action.site? && !neighborhood[action.site])
         registerNeighbor(action.site)
 
+
+
   if (action?)
+    console.log(action)
     if (pageBuffer[action.slug]?)
       pageBuffer[action.slug] = undefined
+    if (!registeredPages[action.slug])
+      registerSelf(pagehandler, "page/" + action.slug)
+
     sites = []
     sites.push(action.site) if action.site?
     sites.push(action.item.site) if (action.item? && action.item.site?)
     sites.push(action.fork) if action.fork?
     for site in sites
       registerNeighbor(site) if (!neighborhood[site])
+
   else if argv?
     console.log("got argv")
     parts = argv.url.split("//")[1]
@@ -189,6 +197,7 @@ module.exports = (pagehandler, action, argv) ->
       for page in sitemap
         registerSelf(pagehandler, "page/" + page.slug)
         pagehandler.get page.slug, (e, page, status) ->
+          console.log("got page from pagehandler",page.title)
           scan page
 
     registerSelf(pagehandler)
