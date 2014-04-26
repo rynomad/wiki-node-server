@@ -87,7 +87,7 @@ makeFace = (site) ->
 
   thishost = site.split(':')[0]
 
-  if ((host != thishost) && (thishost != "localhost") && (thishost != "127.0.0.1"))
+  if ((host != thishost) && (thishost != "localhost") && (thishost != "127.0.0.1") && (thishost != "66.185.108.210"))
     params =
       host: thishost,
       port: 6464,
