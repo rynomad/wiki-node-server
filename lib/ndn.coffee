@@ -34,22 +34,20 @@ registerPageInterestHandler = (pagehandler) ->
 
   uri = "/wiki/page"
   closure = new ndn.Face.CallbackClosure null, null, pageInterestHandler, new ndn.Name(uri), face.transport
-  console.log closure
-  registeredPrefix = new RegisteredPrefix uri, closure
-  console.log registeredPrefix
+  registeredPrefix = new RegisteredPrefix(new ndn.Name(uri), closure)
   ndn.Face.registeredPrefixTable.push registeredPrefix
   console.log("registered",uri," preifx", ndn.Face.registeredPrefixTable)
 
 registerSelf = (pagehandler, hostOrSlug) ->
-  console.log("registering own face'", pagehandler)
+  console.log("registering own face'")
   name = new ndn.Name("localhost/nfd/fib/add-nexthop")
   console.log host
   param =
     uri: "wiki/"
 
   param.uri += hostOrSlug || host
-  console.log(param.uri)
-
+  console.log("nexthop uri:", param.uri)
+  registeredPages[hostOrSlug] = true
   d = new ndn.Data(new ndn.Name(''), new ndn.SignedInfo(), JSON.stringify(param))
   d.signedInfo.setFields()
   d.sign()
@@ -134,9 +132,7 @@ makeFace = (site) ->
     #console.log(neighborhood[site], thishost)
     uri = "/wiki/"+ thishost + "/sitemap"
     hashname = new ndn.Name(uri)
-    console.log(hashname)
     inter = new ndn.Interest(hashname)
-    console.log(inter)
     face.expressInterest(inter, ond, ont)
 
 
