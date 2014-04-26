@@ -84,63 +84,65 @@ registerSelf = (pagehandler, hostOrSlug) ->
 
 makeFace = (site) ->
   console.log("making face", site)
+
   thishost = site.split(':')[0]
-  params =
-    host: thishost,
-    port: 6464,
-    protocol: "tcp"
-    nextHop:
-      uri: "wiki/" + thishost
+  if host != thishost
+    params =
+      host: thishost,
+      port: 6464,
+      protocol: "tcp"
+      nextHop:
+        uri: "wiki/" + thishost
 
-  console.log params.nextHop
+    console.log params.nextHop
 
-  dat = new ndn.Data(new ndn.Name(''), new ndn.SignedInfo(), JSON.stringify(params))
-  dat.signedInfo.setFields()
-  dat.sign()
-  enc = dat.wireEncode()
+    dat = new ndn.Data(new ndn.Name(''), new ndn.SignedInfo(), JSON.stringify(params))
+    dat.signedInfo.setFields()
+    dat.sign()
+    enc = dat.wireEncode()
 
-  com = new ndn.Name("localhost/nfd/faces/create")
+    com = new ndn.Name("localhost/nfd/faces/create")
 
-  com.append(enc.buffer)
-  inst = new ndn.Interest(com)
-
-
-  ond = (interest, data) ->
-    neighborhood[site].sitemap = JSON.parse(data.content.toString())
-
-    #console.log("got remote sitemap,", neighborhood[site].sitemap)
-    for page in neighborhood[site].sitemap
-      nexthop =
-        uri: "wiki/page/" + page.slug,
-        faceID : neighborhood[site].faceID,
-
-      d = new ndn.Data(new ndn.Name(), new ndn.SignedInfo(), JSON.stringify(nexthop))
-      d.signedInfo.setFields()
-      d.sign()
-      n = new ndn.Name("localhost/nfd/fib/add-nexthop")
-      n.append(d.wireEncode().buffer)
-      i = new ndn.Interest(n)
-      face.expressInterest(i)
-
-  ont = (timeout, intrerest) ->
-    console.log("getremoteKeyTimeout")
-
-  onData = (interest, data) ->
-    console.log("makeFace got Response", data.content.toString())
-    neighborhood[site].faceID = JSON.parse(data.content.toString()).faceID
-    #neighborhood[site].hashName = JSON.parse(data.content).ndndid
-    #console.log(neighborhood[site], thishost)
-    uri = "/wiki/"+ thishost + "/sitemap"
-    hashname = new ndn.Name(uri)
-    inter = new ndn.Interest(hashname)
-    face.expressInterest(inter, ond, ont)
+    com.append(enc.buffer)
+    inst = new ndn.Interest(com)
 
 
+    ond = (interest, data) ->
+      neighborhood[site].sitemap = JSON.parse(data.content.toString())
 
-  onTimeout = (interest) ->
-    console.log("makeFace timeout", site)
+      #console.log("got remote sitemap,", neighborhood[site].sitemap)
+      for page in neighborhood[site].sitemap
+        nexthop =
+          uri: "wiki/page/" + page.slug,
+          faceID : neighborhood[site].faceID,
 
-  face.expressInterest(inst, onData, onTimeout)
+        d = new ndn.Data(new ndn.Name(), new ndn.SignedInfo(), JSON.stringify(nexthop))
+        d.signedInfo.setFields()
+        d.sign()
+        n = new ndn.Name("localhost/nfd/fib/add-nexthop")
+        n.append(d.wireEncode().buffer)
+        i = new ndn.Interest(n)
+        face.expressInterest(i)
+
+    ont = (timeout, intrerest) ->
+      console.log("getremoteKeyTimeout")
+
+    onData = (interest, data) ->
+      console.log("makeFace got Response", data.content.toString())
+      neighborhood[site].faceID = JSON.parse(data.content.toString()).faceID
+      #neighborhood[site].hashName = JSON.parse(data.content).ndndid
+      #console.log(neighborhood[site], thishost)
+      uri = "/wiki/"+ thishost + "/sitemap"
+      hashname = new ndn.Name(uri)
+      inter = new ndn.Interest(hashname)
+      face.expressInterest(inter, ond, ont)
+
+
+
+    onTimeout = (interest) ->
+      console.log("makeFace timeout", site)
+
+    face.expressInterest(inst, onData, onTimeout)
 
 registerNeighbor = (site) ->
 
