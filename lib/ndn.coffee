@@ -86,7 +86,7 @@ makeFace = (site) ->
   console.log("making face", site)
 
   thishost = site.split(':')[0]
-  if ((host != thishost) && (thishost != "localhost"))
+  if ((host != thishost) && (thishost != "localhost") && (thishost != "127.0.0.1"))
     params =
       host: thishost,
       port: 6464,
