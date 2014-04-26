@@ -86,6 +86,7 @@ makeFace = (site) ->
   console.log("making face", site)
 
   thishost = site.split(':')[0]
+
   if ((host != thishost) && (thishost != "localhost") && (thishost != "127.0.0.1"))
     params =
       host: thishost,
@@ -94,7 +95,7 @@ makeFace = (site) ->
       nextHop:
         uri: "wiki/" + thishost
 
-    console.log params.nextHop
+    console.log thishost, host
 
     dat = new ndn.Data(new ndn.Name(''), new ndn.SignedInfo(), JSON.stringify(params))
     dat.signedInfo.setFields()
