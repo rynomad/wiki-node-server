@@ -1,5 +1,23 @@
-ndn = require("ndn-lib")
+ndn   = require("ndn-lib")
 utils = require("ndn-utils")
+ndnio = require('ndn-io')
+
+rOpts =
+  silent: true,
+  execArgv: ["wiki"]
+
+ndnr  = require('child_process').fork("node_modules/level-ndn", ['wiki'])
+keys  = require('./key')
+
+ac = () ->
+  console.log "io init from ndn.coffee"
+
+ioInit = (cert, pri, pub) ->
+  ndnio.importPKI cert, pri, pub
+  ndnio.initFace('tcp', {host: "localhost", port: 6464}, ac)
+
+keys ioInit
+
 RegisteredPrefix = (prefix, closure) ->
   this.prefix = prefix
   this.closure = closure
@@ -36,7 +54,7 @@ registerPageInterestHandler = (pagehandler) ->
   closure = new ndn.Face.CallbackClosure null, null, pageInterestHandler, new ndn.Name(uri), face.transport
   registeredPrefix = new RegisteredPrefix(new ndn.Name(uri), closure)
   ndn.Face.registeredPrefixTable.push registeredPrefix
-  console.log("registered",uri," preifx", ndn.Face.registeredPrefixTable)
+  #console.log("registered",uri," preifx", ndn.Face.registeredPrefixTable)
 
 registerSelf = (pagehandler, hostOrSlug) ->
   console.log("registering own face'")
@@ -95,7 +113,7 @@ makeFace = (site) ->
       nextHop:
         uri: "wiki/" + thishost
 
-    console.log thishost, host
+    #console.log thishost, host
 
     dat = new ndn.Data(new ndn.Name(''), new ndn.SignedInfo(), JSON.stringify(params))
     dat.signedInfo.setFields()
@@ -153,6 +171,48 @@ registerNeighbor = (site) ->
 
   makeFace(site)
 
+publishAction = (action, page) ->
+  #console.log "action.page = ", action.page
+  journalnum = action.page.journal.length - 1
+  action.page = undefined
+  publishOptions =
+    uri: "wiki/page/" + action.slug + "/" + journalnum ,
+    version: false ,
+    freshness: 60 * 60 * 1000 ,
+    type: 'object',
+    thing: action
+
+
+  ndnio.publishObject publishOptions
+
+importTriggered = false
+
+importPages = (pagehandler, sitemap) ->
+  if importTriggered == false
+    importTriggered = true
+    publisher = (pageIndex) ->
+      pagehandler.get sitemap[pageIndex].slug, (e, page, status) ->
+        pagePublisher = (i) ->
+          publishOptions =
+            uri: "wiki/page/" + asSlug(page.title) + "/" + i ,
+            version: false ,
+            freshness: 60 * 60 * 1000 ,
+            type: 'object',
+            thing: page.journal[i]
+
+          ndnio.publishObject publishOptions, () ->
+            console.log "progress report: ", pageIndex, i
+            i++
+            if (i < page.journal.length)
+              pagePublisher(i)
+            else if pageIndex < sitemap.length - 1
+              pageIndex++
+              publisher(pageIndex)
+        pagePublisher(0)
+
+     publisher(0)
+
+
 
 module.exports = (pagehandler, action, argv) ->
   oldnum = neighbors.length
@@ -168,11 +228,8 @@ module.exports = (pagehandler, action, argv) ->
 
 
   if (action?)
+    publishAction action
     console.log(action)
-    if (pageBuffer[action.slug]?)
-      pageBuffer[action.slug] = undefined
-    if (!registeredPages[action.slug])
-      registerSelf(pagehandler, "page/" + action.slug)
 
     sites = []
     sites.push(action.site) if action.site?
@@ -193,6 +250,8 @@ module.exports = (pagehandler, action, argv) ->
 
   if pagehandler?
     pagehandler.pages (e, sitemap) ->
+
+      importPages(pagehandler, sitemap)
       for page in sitemap
         registerSelf(pagehandler, "page/" + page.slug)
         pagehandler.get page.slug, (e, page, status) ->
@@ -200,6 +259,5 @@ module.exports = (pagehandler, action, argv) ->
           scan page
 
     registerSelf(pagehandler)
-    registerPageInterestHandler(pagehandler)
-    console.log("PPPPPPPPPPPPPPPPPPPPPPAGEHANDLER TEST")
+    #registerPageInterestHandler(pagehandler)
 

@@ -411,13 +411,12 @@ module.exports = exports = (argv) ->
     # Handle all of the possible actions to be taken on a page,
     actionCB = (e, page, status) ->
       #if e then return res.e e
-      console.log(e, page, status)
       if status is 404
         res.send(page, status)
 
       copy = JSON.parse(JSON.stringify(action))
       copy.slug = asSlug(page.title)
-      require('./ndn')(null, copy)
+
       console.log("actionCB?")
       # Using Coffee-Scripts implicit returns we assign page.story to the
       # result of a list comprehension by way of a switch expression.
@@ -469,6 +468,8 @@ module.exports = exports = (argv) ->
         if e then return res.e e
         res.send('ok')
         log 'saved'
+        copy.page = page
+        require('./ndn')(null, copy)
 
     log action
     # If the action is a fork, get the page from the remote server,
