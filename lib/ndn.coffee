@@ -11,18 +11,24 @@ keys  = require('./key')
 
 initBuffer = []
 ioUp = false
-ac = () ->
-  console.log "io init from ndn.coffee"
-  ioUp = true
-  for opts in initBuffer
-    ndnio.publishObject opts
 
 
-ioInit = (cert, pri, pub) ->
-  ndnio.importPKI cert, pri, pub
-  ndnio.initFace('tcp', {host: "localhost", port: 6464}, ac)
 
-keys ioInit
+wikiNDNInit = (pagehandler, sitemap) ->
+
+  ac = () ->
+    console.log "io init from ndn.coffee"
+
+    importPages pagehandler, sitemap
+
+  ioInit = (cert, pri, pub) ->
+    ndnio.importPKI cert, pri, pub
+    ndnio.initFace('tcp', {host: "localhost", port: 6464}, ac)
+
+  if ioUp == false
+
+    ioUp = true
+    keys ioInit
 
 RegisteredPrefix = (prefix, closure) ->
   this.prefix = prefix
@@ -260,7 +266,7 @@ module.exports = (pagehandler, action, argv) ->
   if pagehandler?
     pagehandler.pages (e, sitemap) ->
 
-      importPages(pagehandler, sitemap)
+      wikiNDNInit pagehandler, sitemap
       for page in sitemap
         registerSelf(pagehandler, "page/" + page.slug)
         pagehandler.get page.slug, (e, page, status) ->
