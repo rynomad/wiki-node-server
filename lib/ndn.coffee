@@ -9,8 +9,14 @@ rOpts =
 ndnr  = require('child_process').fork("node_modules/level-ndn", ['wiki'])
 keys  = require('./key')
 
+initBuffer = []
+ioUp = false
 ac = () ->
   console.log "io init from ndn.coffee"
+  ioUp = true
+  for opts in initBuffer
+    ndnio.publishObject opts
+
 
 ioInit = (cert, pri, pub) ->
   ndnio.importPKI cert, pri, pub
@@ -182,8 +188,11 @@ publishAction = (action, page) ->
     type: 'object',
     thing: action
 
+  if ioUp == true
+    ndnio.publishObject publishOptions
+  else
+    initBuffer.push publishOptions
 
-  ndnio.publishObject publishOptions
 
 importTriggered = false
 
