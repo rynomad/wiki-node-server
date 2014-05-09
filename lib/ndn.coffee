@@ -6,7 +6,6 @@ rOpts =
   silent: true,
   execArgv: ["wiki"]
 
-ndnr  = require('child_process').fork("node_modules/level-ndn", ['wiki'])
 keys  = require('./key')
 
 initBuffer = []
@@ -22,6 +21,8 @@ wikiNDNInit = (pagehandler, sitemap) ->
     importPages pagehandler, sitemap
 
   ioInit = (cert, pri, pub) ->
+
+    ndnr  = require('child_process').fork("node_modules/level-ndn", ['wiki'])
     ndnio.importPKI cert, pri, pub
     ndnio.initFace('tcp', {host: "localhost", port: 6464}, ac)
 
@@ -189,7 +190,6 @@ publishAction = (action, page) ->
   action.page = undefined
   publishOptions =
     uri: "wiki/page/" + action.slug + "/" + journalnum ,
-    version: false ,
     freshness: 60 * 60 * 1000 ,
     type: 'object',
     thing: action
@@ -210,7 +210,6 @@ importPages = (pagehandler, sitemap) ->
         pagePublisher = (i) ->
           publishOptions =
             uri: "wiki/page/" + asSlug(page.title) + "/" + i ,
-            version: false ,
             freshness: 60 * 60 * 1000 ,
             type: 'object',
             thing: page.journal[i]
