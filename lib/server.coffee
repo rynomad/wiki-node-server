@@ -94,7 +94,7 @@ module.exports = exports = (argv) ->
 
   # Require the database adapter and initialize it with options.
   app.pagehandler = pagehandler = require(argv.database.type)(argv)
-  require('nfd')(() ->
+  require('ndn-forwarder')(() ->
       require('./ndn')(pagehandler, null, argv)
     )
   #### Setting up Authentication ####
