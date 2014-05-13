@@ -36,7 +36,7 @@
     "qs": "0.6.5",
     "underscore": "*",
     "redis": "~0.8.4",
-    "ndn-forwarder": "*",
+    "ndn-forwarder": "git+https://github.com/rynomad/nfd-js.git#atom",
     "ndn-io": "*",
     "level-ndn": "*",
     "ndn-lib": "git+https://github.com/rynomad/ndn-js.git",
