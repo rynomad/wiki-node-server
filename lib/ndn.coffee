@@ -199,10 +199,21 @@ publishAction = (action, page) ->
   else
     initBuffer.push publishOptions
 
+publishSitemap = (sitemap) ->
+  i = 0
+  for entry in sitemap
+    publishOptions =
+      uri: "wiki/system/#{host}/sitemap/#{i}",
+      type: "object"
+      freshness: 60 * 60 * 1000
+      thing: entry
+    i++
+    ndnio.publishObject(publishOptions)
 
 importTriggered = false
 
 importPages = (pagehandler, sitemap) ->
+  publishSitemap sitemap
   console.log("importing pages and tagging with hashname ", host)
   if importTriggered == false
     importTriggered = true
