@@ -205,6 +205,7 @@ publishAction = (action, page) ->
 importTriggered = false
 
 importPages = (pagehandler, sitemap) ->
+  console.log("importing pages and tagging with hashname ", host)
   if importTriggered == false
     importTriggered = true
     publisher = (pageIndex) ->
