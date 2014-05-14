@@ -211,7 +211,7 @@ importPages = (pagehandler, sitemap) ->
       pagehandler.get sitemap[pageIndex].slug, (e, page, status) ->
         pagePublisher = (i) ->
           publishOptions =
-            uri: "wiki/page/" + asSlug(page.title) + "/" + i ,
+            uri: "wiki/page/" + asSlug(page.title) + "/" + i + "/" + host  ,
             version: false ,
             freshness: 60 * 60 * 1000 ,
             type: 'object',
