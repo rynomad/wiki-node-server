@@ -118,6 +118,8 @@ makeFace = (site) ->
 
   thishost = site.split(':')[0]
 
+  host =
+
   if ((host != thishost) && (thishost != "localhost") && (thishost != "127.0.0.1") && (thishost != "66.185.108.210"))
     params =
       host: thishost,
@@ -229,7 +231,7 @@ importPages = (pagehandler, sitemap) ->
 
 
 
-module.exports = (pagehandler, action, argv) ->
+module.exports = (pagehandler, action, self) ->
   oldnum = neighbors.length
   scan = (page) ->
     for item in page.story
@@ -253,8 +255,8 @@ module.exports = (pagehandler, action, argv) ->
     for site in sites
       registerNeighbor(site) if (!neighborhood[site])
 
-  else if argv?
-    console.log("got argv")
+  else if self?
+    console.log("got self", self.hashname)
     ndnr.tangle("wiki", null, null, ()->
 
                 console.log "repo tangled"
