@@ -6,10 +6,8 @@ rOpts =
   silent: true,
   execArgv: ["wiki"]
 
-ndnr  = require("level-ndn").tangle("wiki", null, null, ()->
+ndnr  = require("level-ndn")
 
-                                   console.log "repo tangled"
-                                   )
 keys  = require('./key')
 
 initBuffer = []
@@ -22,7 +20,6 @@ wikiNDNInit = (pagehandler, sitemap) ->
   ac = () ->
     console.log "io init from ndn.coffee"
 
-    importPages pagehandler, sitemap
 
   ioInit = (cert, pri, pub) ->
     ndnio.useNDN(ndn)
@@ -258,18 +255,24 @@ module.exports = (pagehandler, action, argv) ->
 
   else if argv?
     console.log("got argv")
-    parts = argv.url.split("//")[1]
-    console.log parts
-    host = parts.split(":")[0]
-    console.log(host)
 
 
 
 
   if pagehandler?
     pagehandler.pages (e, sitemap) ->
+      ndnr.tangle("wiki", null, null, ()->
 
-      wikiNDNInit pagehandler, sitemap
+            console.log "repo tangled"
+            ndnr.init("wiki", ()->
+                       console.log("open")
+                     , () ->
+
+
+                       wikiNDNInit pagehandler, sitemap
+                     )
+           )
+
       for page in sitemap
         registerSelf(pagehandler, "page/" + page.slug)
         pagehandler.get page.slug, (e, page, status) ->
