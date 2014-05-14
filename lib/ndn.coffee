@@ -200,20 +200,26 @@ publishAction = (action, page) ->
     initBuffer.push publishOptions
 
 publishSitemap = (sitemap) ->
-  i = 0
-  for entry in sitemap
+  publishEntry = (j) ->
+    entry = sitemap[j]
+    console.log "publishing sitemap entry #{j} under #{host}"
     publishOptions =
-      uri: "wiki/system/#{host}/sitemap/#{i}",
+      uri: "wiki/system/#{host}/sitemap/#{j}",
       type: "object"
       freshness: 60 * 60 * 1000
       thing: entry
-    i++
-    ndnio.publishObject(publishOptions)
+
+    ndnio.publish publishOptions, ()->
+      j++
+      if j < sitemap.length
+        publishEntry(j)
+
+
+  publishEntry(0)
 
 importTriggered = false
 
 importPages = (pagehandler, sitemap) ->
-  publishSitemap sitemap
   console.log("importing pages and tagging with hashname ", host)
   if importTriggered == false
     importTriggered = true
@@ -234,9 +240,12 @@ importPages = (pagehandler, sitemap) ->
             else if pageIndex < sitemap.length - 1
               pageIndex++
               publisher(pageIndex)
+            else
+              publishSitemap sitemap
         pagePublisher(0)
 
      publisher(0)
+
 
 
 
