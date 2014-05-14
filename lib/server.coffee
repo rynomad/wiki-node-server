@@ -96,6 +96,7 @@ module.exports = exports = (argv) ->
   app.pagehandler = pagehandler = require(argv.database.type)(argv)
 
   ndnInitCb = (self) ->
+    console.log "ndnInitCb"
     require('./ndn')(pagehandler, null, self)
 
   require('ndn-forwarder')(ndnInitCb)

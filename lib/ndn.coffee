@@ -19,7 +19,7 @@ wikiNDNInit = (pagehandler, sitemap) ->
 
   ac = () ->
     console.log "io init from ndn.coffee"
-
+    importPages pagehandler, sitemap
 
   ioInit = (cert, pri, pub) ->
     ndnio.useNDN(ndn)
@@ -256,31 +256,42 @@ module.exports = (pagehandler, action, self) ->
       registerNeighbor(site) if (!neighborhood[site])
 
   else if self?
+    host = self.hashname
     console.log("got self", self.hashname)
-    ndnr.tangle("wiki", null, null, ()->
+    onNdnInit = () ->
+      console.log("repo open")
 
-                console.log "repo tangled"
-                ndnr.init("wiki", ()->
-                          console.log("open")
-                          , () ->
+    onRepoFirst = () ->
+      console.log("repo open first time", pagehandler)
+      pagehandler.pages ((e, sitemap) ->
+        console.log("got sitemap?")
+        if (e?)
+          console.log "got error", e.toString()
+          return
+        else
+          console.log "yes"
+          wikiNDNInit pagehandler, sitemap
+      )
 
-
-                          wikiNDNInit pagehandler, sitemap
-                         )
-               )
+    repoTangleCb = () ->
+      console.log "repo tangled"
+      ndnr.init("wiki", onNdnInit, onRepoFirst)
 
 
 
   if pagehandler?
     pagehandler.pages ((e, sitemap) ->
       console.log("got sitemap", e , sitemap)
+      if (e?) then e
+      else
+        if (self?)
+          ndnr.tangle("wiki", null, null, repoTangleCb)
 
-
-      for page in sitemap
-        registerSelf(pagehandler, "page/" + page.slug)
-        pagehandler.get page.slug, (e, page, status) ->
-          console.log("got page from pagehandler",page.title)
-          scan page
+        for page in sitemap
+          registerSelf(pagehandler, "page/" + page.slug)
+          pagehandler.get page.slug, (e, page, status) ->
+            console.log("got page from pagehandler",page.title)
+            scan page
     )
     registerSelf(pagehandler)
     #registerPageInterestHandler(pagehandler)
