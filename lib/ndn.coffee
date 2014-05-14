@@ -6,7 +6,10 @@ rOpts =
   silent: true,
   execArgv: ["wiki"]
 
-ndnr  = require('child_process').fork("node_modules/wiki-server/node_modules/level-ndn", ['wiki'])
+ndnr  = require("level-ndn").tangle("wiki", null, null, ()->
+
+                                   console.log "repo tangled"
+                                   )
 keys  = require('./key')
 
 initBuffer = []
