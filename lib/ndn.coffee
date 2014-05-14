@@ -261,6 +261,7 @@ module.exports = (pagehandler, action, argv) ->
 
   if pagehandler?
     pagehandler.pages (e, sitemap) ->
+      console.log("got sitemap", e , sitemap)
       ndnr.tangle("wiki", null, null, ()->
 
             console.log "repo tangled"
