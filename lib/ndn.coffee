@@ -212,7 +212,6 @@ importPages = (pagehandler, sitemap) ->
         pagePublisher = (i) ->
           publishOptions =
             uri: "wiki/page/" + asSlug(page.title) + "/" + i + "/" + host  ,
-            version: false ,
             freshness: 60 * 60 * 1000 ,
             type: 'object',
             thing: page.journal[i]
