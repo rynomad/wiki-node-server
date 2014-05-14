@@ -95,9 +95,10 @@ module.exports = exports = (argv) ->
   # Require the database adapter and initialize it with options.
   app.pagehandler = pagehandler = require(argv.database.type)(argv)
 
-  require('ndn-forwarder')((self) ->
-      require('./ndn')(pagehandler, null, self)
-    )
+  ndnInitCb = (self) ->
+    require('./ndn')(pagehandler, null, self)
+
+  require('ndn-forwarder')(ndnInitCb)
   #### Setting up Authentication ####
   # The owner of a server is simply the open id url that the wiki
   # has been claimed with.  It is persisted at argv.status/open_id.identity,
