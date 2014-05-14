@@ -58,7 +58,7 @@ render = (page) ->
       ).join('\n')
 
 # Set export objects for node and coffee to a function that generates a sfw server.
-module.exports = exports = (argv) ->
+module.exports = exports = (argv, initCB) ->
   # Create the main application object, app.
   app = express()
 
@@ -97,6 +97,7 @@ module.exports = exports = (argv) ->
 
   ndnInitCb = (self) ->
     console.log "ndnInitCb"
+    initCB(self.hashname)
     require('./ndn')(pagehandler, null, self)
 
   require('ndn-forwarder')(ndnInitCb)
