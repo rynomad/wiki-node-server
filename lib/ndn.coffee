@@ -255,31 +255,31 @@ module.exports = (pagehandler, action, argv) ->
 
   else if argv?
     console.log("got argv")
+    ndnr.tangle("wiki", null, null, ()->
 
+                console.log "repo tangled"
+                ndnr.init("wiki", ()->
+                          console.log("open")
+                          , () ->
+
+
+                          wikiNDNInit pagehandler, sitemap
+                         )
+               )
 
 
 
   if pagehandler?
-    pagehandler.pages (e, sitemap) ->
+    pagehandler.pages ((e, sitemap) ->
       console.log("got sitemap", e , sitemap)
-      ndnr.tangle("wiki", null, null, ()->
 
-            console.log "repo tangled"
-            ndnr.init("wiki", ()->
-                       console.log("open")
-                     , () ->
-
-
-                       wikiNDNInit pagehandler, sitemap
-                     )
-           )
 
       for page in sitemap
         registerSelf(pagehandler, "page/" + page.slug)
         pagehandler.get page.slug, (e, page, status) ->
           console.log("got page from pagehandler",page.title)
           scan page
-
+    )
     registerSelf(pagehandler)
     #registerPageInterestHandler(pagehandler)
 
