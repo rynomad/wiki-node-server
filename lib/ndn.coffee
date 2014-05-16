@@ -1,6 +1,7 @@
 ndn   = require("ndn-lib")
 utils = require("ndn-utils")
 ndnio = require('ndn-io')
+glob  = require("glob")
 
 rOpts =
   silent: true,
@@ -16,6 +17,10 @@ ioUp = false
 
 
 wikiNDNInit = (pagehandler, sitemap) ->
+
+  glob "wiki-plugin-*/client", {cwd: argv.packageDir}, (e, plugins) ->
+    plugins.map (plugin) ->
+      console.log plugin
 
   ac = () ->
     console.log "io init from ndn.coffee"
