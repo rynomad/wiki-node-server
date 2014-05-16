@@ -45,7 +45,7 @@ wikiNDNInit = (pagehandler, sitemap) ->
       pub(0)
   ac = () ->
     console.log "io init from ndn.coffee"
-    importPages pagehandler, sitemap, publishPages
+    importPages pagehandler, sitemap, publishPlugins
 
   ioInit = (cert, pri, pub) ->
     ndnio.useNDN(ndn)
