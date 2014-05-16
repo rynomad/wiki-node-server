@@ -45,8 +45,7 @@ wikiNDNInit = (pagehandler, sitemap) ->
       pub(0)
   ac = () ->
     console.log "io init from ndn.coffee"
-    importPages pagehandler, sitemap
-    publishPlugins()
+    importPages pagehandler, sitemap, publishPages
 
   ioInit = (cert, pri, pub) ->
     ndnio.useNDN(ndn)
@@ -226,7 +225,7 @@ publishAction = (action, page) ->
   else
     initBuffer.push publishOptions
 
-publishSitemap = (sitemap) ->
+publishSitemap = (sitemap, cb) ->
   publishEntry = (j) ->
     entry = sitemap[j]
     console.log "publishing sitemap entry #{j} under #{host}"
@@ -240,13 +239,15 @@ publishSitemap = (sitemap) ->
       j++
       if j < sitemap.length
         publishEntry(j)
+      else
+        cb()
 
 
   publishEntry(0)
 
 importTriggered = false
 
-importPages = (pagehandler, sitemap) ->
+importPages = (pagehandler, sitemap, cb) ->
   console.log("importing pages and tagging with hashname ", host)
   if importTriggered == false
     importTriggered = true
@@ -268,7 +269,7 @@ importPages = (pagehandler, sitemap) ->
               pageIndex++
               publisher(pageIndex)
             else
-              publishSitemap sitemap
+              publishSitemap sitemap, cb
         pagePublisher(0)
 
      publisher(0)
