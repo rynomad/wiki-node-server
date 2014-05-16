@@ -18,13 +18,35 @@ ioUp = false
 
 wikiNDNInit = (pagehandler, sitemap) ->
 
-  glob "wiki-plugin-*/client", {cwd: argv.packageDir}, (e, plugins) ->
-    plugins.map (plugin) ->
-      console.log plugin
+  publishPlugins = () ->
+    pluginDir = __dirname + "/../../"
+    glob "wiki-plugin-*/client", {cwd: pluginDir}, (e, plugins) ->
+      pub = (i) ->
+        glob "*.js" , {cwd: pluginDir + plugins[i] + "/" }, (e, jss) ->
 
+          jss.map (js) ->
+
+            pluginPublishParams =
+              type: "application/javascript",
+              uri: "wiki/plugin/" + js.slice(0, -3),
+              freshness: 60 * 60 * 1000,
+              thing: pluginDir +  plugins[i] + "/" + js
+
+            ndnio.publish(pluginPublishParams, (uri, success) ->
+
+                          console.log js, "published", success
+
+                          if ((i + 1 < plugins.length)&& success)
+                            pub(i + 1)
+                          else if (!success)
+                            setTimeout pub, 500, i
+              )
+
+      pub(0)
   ac = () ->
     console.log "io init from ndn.coffee"
     importPages pagehandler, sitemap
+    publishPlugins()
 
   ioInit = (cert, pri, pub) ->
     ndnio.useNDN(ndn)
