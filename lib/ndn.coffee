@@ -145,12 +145,18 @@ makeFace = (site) ->
   thishost = site.split(':')[0]
 
   if ((host != thishost) && (thishost != "localhost") && (thishost != "127.0.0.1") && (thishost != "66.185.108.210"))
+
     params =
       host: thishost,
       port: 6464,
-      protocol: "tcp"
       nextHop:
         uri: "wiki/" + thishost
+
+    if thishost.length > 30
+      params.protocol = "th"
+    else
+      params.protocol = "tcp"
+
 
     #console.log thishost, host
 
