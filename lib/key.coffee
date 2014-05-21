@@ -1,6 +1,8 @@
 
 levelup = require('levelup')
 path = process.env.HOME || process.env.USERPROFILE || process.env.HOMEPATH
+pki = require("node-forge").pki
+
 module.exports = (callback) ->
   levelup path + "/.wiki/keys"
   , (err, db) ->
@@ -9,7 +11,6 @@ module.exports = (callback) ->
     db.get "public", (err, value) ->
       if err
         if err.notFound
-          pki = require("node-forge").pki
           pki.rsa.generateKeyPair
             bits: 2048
           , (er, keys) ->
