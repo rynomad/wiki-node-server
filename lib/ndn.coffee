@@ -283,7 +283,7 @@ importPages = (pagehandler, sitemap, cb) ->
 
 
 
-module.exports = (pagehandler, action, self) ->
+module.exports = (pagehandler, action, self, initCB) ->
   oldnum = neighbors.length
   scan = (page) ->
     for item in page.story
@@ -312,6 +312,8 @@ module.exports = (pagehandler, action, self) ->
     console.log("got self", self.hashname)
     onNdnInit = () ->
       console.log("repo open")
+
+      initCB(self.hashname)
 
     onRepoFirst = () ->
       console.log("repo open first time", pagehandler)

@@ -97,8 +97,7 @@ module.exports = exports = (argv, initCB) ->
 
   ndnInitCb = (self) ->
     console.log "ndnInitCb"
-    initCB(self.hashname)
-    require('./ndn')(pagehandler, null, self)
+    require('./ndn')(pagehandler, null, self, initCB)
 
   require('ndn-forwarder')(ndnInitCb)
   #### Setting up Authentication ####
