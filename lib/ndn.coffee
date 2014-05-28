@@ -15,19 +15,14 @@ initBuffer = []
 ioUp = false
 
 
-
-wikiNDNInit = (pagehandler, sitemap) ->
-
-  publishPlugins = () ->
-    pluginDir = __dirname + "/../../"
-    glob "wiki-plugin-*/client", {cwd: pluginDir}, (e, plugins) ->
-      pub = (i) ->
-        glob "*.js" , {cwd: pluginDir + plugins[i] + "/" }, (e, jss) ->
-
-          jss.map (js) ->
-
-            pluginPublishParams =
-              type: "application/javascript",
+publishPlugins = () ->
+  pluginDir = __dirname + "/../../"
+  glob "wiki-plugin-*/client", {cwd: pluginDir}, (e, plugins) ->
+    pub = (i) ->
+      glob "*.js" , {cwd: pluginDir + plugins[i] + "/" }, (e, jss) ->
+        jss.map (js) ->
+          pluginPublishParams =
+            type: "application/javascript",
               uri: "wiki/plugin/" + js.slice(0, -3),
               freshness: 60 * 60 * 1000,
               thing: pluginDir +  plugins[i] + "/" + js
@@ -43,6 +38,16 @@ wikiNDNInit = (pagehandler, sitemap) ->
               )
 
       pub(0)
+  glob path.join('wiki-plugin-*', 'factory.json'),{cwd: pluginDir} (e, files) ->
+    if e then return res.e(e)
+    files = files.map (file) ->
+      return fs.createReadStream(file).on('error', res.e).pipe(JSONStream.parse())
+
+    console.log 'factory files', files
+
+ = (pagehandler, sitemap) ->
+
+
   ac = () ->
     console.log "io init from ndn.coffee"
     importPages pagehandler, sitemap, publishPlugins
@@ -180,13 +185,8 @@ makeFace = (site) ->
           uri: "wiki/page/" + page.slug,
           faceID : neighborhood[site].faceID,
 
-        d = new ndn.Data(new ndn.Name(), new ndn.SignedInfo(), JSON.stringify(nexthop))
-        d.signedInfo.setFields()
-        d.sign()
-        n = new ndn.Name("localhost/nfd/fib/add-nexthop")
-        n.append(d.wireEncode().buffer)
-        i = new ndn.Interest(n)
-        face.expressInterest(i)
+        io.addNextHop nexthop, ()->
+                                  console.log("nexthop added")
 
     ont = (timeout, intrerest) ->
       console.log("getremoteKeyTimeout")
@@ -312,7 +312,7 @@ module.exports = (pagehandler, action, self, initCB) ->
     console.log("got self", self.hashname)
     onNdnInit = () ->
       console.log("repo open")
-
+      publishPlugins()
       initCB(self.hashname)
 
     onRepoFirst = () ->
