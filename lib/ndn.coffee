@@ -20,33 +20,53 @@ publishPlugins = () ->
   glob "wiki-plugin-*/client", {cwd: pluginDir}, (e, plugins) ->
     pub = (i) ->
       glob "*.js" , {cwd: pluginDir + plugins[i] + "/" }, (e, jss) ->
+
         jss.map (js) ->
           pluginPublishParams =
             type: "application/javascript",
-              uri: "wiki/plugin/" + js.slice(0, -3),
-              freshness: 60 * 60 * 1000,
-              thing: pluginDir +  plugins[i] + "/" + js
+            uri: "wiki/plugin/" + js.slice(0, -3),
+            freshness: 60 * 60 * 1000,
+            thing: pluginDir +  plugins[i] + "/" + js
 
-            ndnio.publish(pluginPublishParams, (uri, success) ->
+          ndnio.publish(pluginPublishParams, (uri, success) ->
+                        console.log js, "published", success
+                        if ((i + 1 < plugins.length)&& success)
+                          pub(i + 1)
+                        else if (!success)
+                          setTimeout pub, 500, i
+            )
+      glob "*.css" , {cwd: pluginDir + plugins[i] + "/" }, (e, css) ->
+        css.map (cs) ->
+          cssPublishParams =
+            type: "text/css",
+            uri: "wiki/css/" + cs.slice(0, -4),
+            freshness: 60 * 60 * 1000,
+            thing: pluginDir + plugins[i] + "/" + cs
 
-                          console.log js, "published", success
+          ndnio.publish(cssPublishParams, (uri, success) ->
+                         console.log cs, "pubished", success
 
-                          if ((i + 1 < plugins.length)&& success)
-                            pub(i + 1)
-                          else if (!success)
-                            setTimeout pub, 500, i
-              )
+                       )
+    pub(0)
 
-      pub(0)
-  glob path.join('wiki-plugin-*', 'factory.json'),{cwd: pluginDir} (e, files) ->
+  glob pluginDir + 'wiki-plugin-*/factory.json', (e, files) ->
     if e then return res.e(e)
-    files = files.map (file) ->
-      return fs.createReadStream(file).on('error', res.e).pipe(JSONStream.parse())
+    pub = (i) ->
+      fs.createReadStream(files[i]).pipe(JSONStream.parse()).pipe(es.mapSync((data) ->
+                                                                         factoryPublishParams =
+                                                                           type: "object"
+                                                                           uri: "wiki/system/#{host}/factories/#{i}"
+                                                                           thing: data
+                                                                           freshness: 60 * 60 * 1000
+                                                                         i++
+                                                                         ndnio.publish factoryPublishParams, (uri, success) -> pub(i)
+                                                                        ))
 
-    console.log 'factory files', files
+    pub(0)
 
- = (pagehandler, sitemap) ->
 
+
+wikiNDNInit = (pagehandler, sitemap) ->
 
   ac = () ->
     console.log "io init from ndn.coffee"
@@ -312,7 +332,7 @@ module.exports = (pagehandler, action, self, initCB) ->
     console.log("got self", self.hashname)
     onNdnInit = () ->
       console.log("repo open")
-      publishPlugins()
+
       initCB(self.hashname)
 
     onRepoFirst = () ->

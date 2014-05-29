@@ -313,7 +313,10 @@ module.exports = exports = (argv, initCB) ->
     glob path.join(argv.packageDir, 'wiki-plugin-*', 'factory.json'), (e, files) ->
       if e then return res.e(e)
       files = files.map (file) ->
-        return fs.createReadStream(file).on('error', res.e).pipe(JSONStream.parse())
+        return fs.createReadStream(file).on('error', res.e).pipe(JSONStream.parse()).pipe(es.mapSync((data) ->
+                                                                                            console.log(data, "work?")
+                                                                                            return data
+                                                                                          )
 
       es.concat.apply(null, files)
         .on('error', res.e)
